@@ -1,4 +1,4 @@
-import func2url from '../../func2url.json';
+import func2url from '../func2url.json';
 
 const AUTH_URL = func2url['auth'];
 const MESSAGES_URL = func2url['messages'];
