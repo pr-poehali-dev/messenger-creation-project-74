@@ -1,8 +1,10 @@
 import Icon from '@/components/ui/icon';
+import type { User } from '@/lib/api';
 
 interface NavBarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  user?: User | null;
 }
 
 const navItems = [
@@ -14,7 +16,7 @@ const navItems = [
   { id: 'settings', icon: 'Settings', label: 'Настройки' },
 ];
 
-export default function NavBar({ activeSection, onSectionChange }: NavBarProps) {
+export default function NavBar({ activeSection, onSectionChange, user }: NavBarProps) {
   return (
     <div className="nav-bar flex flex-col items-center py-6 gap-2 w-16 h-full">
       <div className="mb-6 flex flex-col items-center">
@@ -46,10 +48,17 @@ export default function NavBar({ activeSection, onSectionChange }: NavBarProps) 
       </div>
 
       <div className="mt-auto">
-        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-violet-500/50 cursor-pointer hover:border-violet-400 transition-all">
-          <div className="w-full h-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
-            А
-          </div>
+        <div
+          onClick={() => onSectionChange('profile')}
+          className="w-9 h-9 rounded-full overflow-hidden border-2 border-violet-500/50 cursor-pointer hover:border-violet-400 transition-all"
+        >
+          {user?.avatar_url ? (
+            <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold">
+              {user?.display_name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
         </div>
       </div>
     </div>

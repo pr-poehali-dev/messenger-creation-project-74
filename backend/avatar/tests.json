@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Upload avatar without token",
+      "method": "POST",
+      "path": "/",
+      "body": {"image": ""},
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

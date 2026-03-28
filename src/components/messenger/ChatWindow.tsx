@@ -1,59 +1,61 @@
 import { useState, useRef, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
-
-const initialMessages = [
-  { id: 1, text: 'Привет! Как дела?', mine: false, time: '14:20', status: 'read' },
-  { id: 2, text: 'Всё хорошо, спасибо! Работаю над новым проектом', mine: true, time: '14:21', status: 'read' },
-  { id: 3, text: 'Звучит интересно! Что за проект?', mine: false, time: '14:22', status: 'read' },
-  {
-    id: 4,
-    text: 'Мессенджер с end-to-end шифрованием. Хочу сделать что-то действительно безопасное 🔒',
-    mine: true,
-    time: '14:23',
-    status: 'read',
-  },
-  {
-    id: 5,
-    text: 'Это очень актуально! Приватность сейчас важна как никогда',
-    mine: false,
-    time: '14:25',
-    status: 'read',
-  },
-  { id: 6, text: 'Окей, увидимся завтра!', mine: false, time: '14:32', status: 'delivered' },
-];
+import { api, type User } from '@/lib/api';
 
 interface ChatWindowProps {
-  chatId: number | null;
+  chatId: string | null;
+  chatUser: { display_name: string; avatar_url?: string; is_online?: boolean } | null;
+  currentUser: User | null;
 }
 
-export default function ChatWindow({ chatId }: ChatWindowProps) {
-  const [messages, setMessages] = useState(initialMessages);
+type Message = {
+  id: string;
+  sender_id: string;
+  text: string;
+  created_at: string;
+  is_read?: boolean;
+};
+
+export default function ChatWindow({ chatId, chatUser, currentUser }: ChatWindowProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!chatId) return;
+    setMessages([]);
+    setLoading(true);
+    api.messages.getHistory(chatId).then((res) => {
+      if (res.messages) setMessages(res.messages);
+      setLoading(false);
+    });
+  }, [chatId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    if (chatId) {
-      setIsTyping(true);
-      const t = setTimeout(() => setIsTyping(false), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [chatId]);
-
-  const sendMessage = () => {
-    if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), text: input, mine: true, time: new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }), status: 'sent' },
-    ]);
+  const sendMessage = async () => {
+    if (!input.trim() || !chatId) return;
+    const text = input.trim();
     setInput('');
+
+    const res = await api.messages.send(chatId, text);
+    if (res.message) {
+      setMessages((prev) => [...prev, res.message]);
+    }
   };
 
-  if (!chatId) {
+  const formatTime = (dt: string) => {
+    try {
+      return new Date(dt).toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
+  if (!chatId || !chatUser) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 empty-state">
         <div className="w-20 h-20 rounded-3xl flex items-center justify-center empty-icon">
@@ -71,22 +73,32 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     );
   }
 
+  const initials = chatUser.display_name?.charAt(0)?.toUpperCase() || '?';
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <div className="chat-header flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-              А
-            </div>
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0f0f1a]" />
+            {chatUser.avatar_url ? (
+              <img src={chatUser.avatar_url} className="w-10 h-10 rounded-full object-cover" alt="" />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                {initials}
+              </div>
+            )}
+            {chatUser.is_online && (
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0f0f1a]" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="text-white font-semibold text-sm">Алексей Смирнов</p>
+              <p className="text-white font-semibold text-sm">{chatUser.display_name}</p>
               <Icon name="Lock" size={12} className="text-violet-400" />
             </div>
-            <p className="text-emerald-400 text-xs">в сети</p>
+            <p className={chatUser.is_online ? 'text-emerald-400 text-xs' : 'text-gray-500 text-xs'}>
+              {chatUser.is_online ? 'в сети' : 'не в сети'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -110,43 +122,39 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
           </div>
         </div>
 
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.mine ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                msg.mine
-                  ? 'message-mine rounded-br-md text-white'
-                  : 'message-other rounded-bl-md text-white'
-              }`}
-            >
-              <p>{msg.text}</p>
-              <div className={`flex items-center gap-1 mt-1 ${msg.mine ? 'justify-end' : 'justify-start'}`}>
-                <span className="text-xs opacity-50">{msg.time}</span>
-                {msg.mine && (
-                  <Icon
-                    name={msg.status === 'read' ? 'CheckCheck' : 'Check'}
-                    size={12}
-                    className={msg.status === 'read' ? 'text-violet-300' : 'text-gray-400'}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="message-other px-4 py-3 rounded-2xl rounded-bl-md flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                />
-              ))}
-            </div>
+        {loading && (
+          <div className="flex justify-center py-8">
+            <Icon name="Loader" size={24} className="text-violet-400 animate-spin" />
           </div>
         )}
+
+        {messages.map((msg) => {
+          const mine = msg.sender_id === currentUser?.id;
+          return (
+            <div key={msg.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  mine ? 'message-mine rounded-br-md text-white' : 'message-other rounded-bl-md text-white'
+                }`}
+              >
+                <p>{msg.text}</p>
+                <div className={`flex items-center gap-1 mt-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                  <span className="text-xs opacity-50">{formatTime(msg.created_at)}</span>
+                  {mine && (
+                    <Icon name={msg.is_read ? 'CheckCheck' : 'Check'} size={12} className={msg.is_read ? 'text-violet-300' : 'text-gray-400'} />
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {messages.length === 0 && !loading && (
+          <div className="flex justify-center py-10">
+            <p className="text-gray-600 text-sm">Напишите первое сообщение!</p>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 

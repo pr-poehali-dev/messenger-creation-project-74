@@ -319,3 +319,72 @@
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* Auth screen */
+.auth-bg {
+  background: #090912;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-glow-1 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(124, 58, 237, 0.15) 0%,
+    transparent 70%
+  );
+  top: -100px;
+  left: -100px;
+  pointer-events: none;
+}
+
+.auth-glow-2 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(236, 72, 153, 0.1) 0%,
+    transparent 70%
+  );
+  bottom: -100px;
+  right: -100px;
+  pointer-events: none;
+}
+
+.auth-card {
+  background: rgba(13, 13, 26, 0.9);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(139, 92, 246, 0.1);
+}
+
+.auth-tabs {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auth-tab-active {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.3);
+}
+
+.auth-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.2s;
+}
+
+.auth-input:focus-within {
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.auth-error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
