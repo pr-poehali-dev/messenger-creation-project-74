@@ -1,0 +1,11 @@
+{
+  "tests": [
+    {
+      "name": "Search without token",
+      "method": "GET",
+      "path": "/?q=test",
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

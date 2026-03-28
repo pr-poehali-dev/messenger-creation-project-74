@@ -3,6 +3,7 @@ import func2url from '../func2url.json';
 const AUTH_URL = func2url['auth'];
 const MESSAGES_URL = func2url['messages'];
 const AVATAR_URL = func2url['avatar'];
+const USERS_URL = func2url['users'];
 
 function getToken(): string {
   return localStorage.getItem('nm_token') || '';
@@ -38,6 +39,11 @@ export const api = {
   avatar: {
     upload: (imageBase64: string, contentType: string) =>
       fetch(AVATAR_URL, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ image: imageBase64, content_type: contentType }) }).then((r) => r.json()),
+  },
+
+  users: {
+    search: (q: string) =>
+      fetch(`${USERS_URL}?q=${encodeURIComponent(q)}`, { headers: authHeaders() }).then((r) => r.json()),
   },
 };
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { api, type User } from '@/lib/api';
+import CallScreen from './CallScreen';
 
 interface ChatWindowProps {
   chatId: string | null;
@@ -20,6 +21,7 @@ export default function ChatWindow({ chatId, chatUser, currentUser }: ChatWindow
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [call, setCall] = useState<{ type: 'audio' | 'video'; direction: 'incoming' | 'outgoing' } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,10 +104,16 @@ export default function ChatWindow({ chatId, chatUser, currentUser }: ChatWindow
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <button className="header-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110">
+          <button
+            onClick={() => setCall({ type: 'audio', direction: 'outgoing' })}
+            className="header-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          >
             <Icon name="Phone" size={17} className="text-gray-400 hover:text-white" />
           </button>
-          <button className="header-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110">
+          <button
+            onClick={() => setCall({ type: 'video', direction: 'outgoing' })}
+            className="header-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110"
+          >
             <Icon name="Video" size={17} className="text-gray-400 hover:text-white" />
           </button>
           <button className="header-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110">
@@ -185,6 +193,17 @@ export default function ChatWindow({ chatId, chatUser, currentUser }: ChatWindow
           </button>
         </div>
       </div>
+
+      {call && (
+        <CallScreen
+          direction={call.direction}
+          callType={call.type}
+          callerName={chatUser.display_name}
+          callerAvatar={chatUser.avatar_url}
+          onAccept={() => {}}
+          onDecline={() => setCall(null)}
+        />
+      )}
     </div>
   );
 }

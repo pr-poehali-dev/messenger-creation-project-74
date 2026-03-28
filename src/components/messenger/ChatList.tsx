@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
 import { api } from '@/lib/api';
+import NewChatModal from './NewChatModal';
 
 type Chat = {
   user_id: string;
@@ -49,6 +50,7 @@ export default function ChatList({ activeChatId, onChatSelect }: ChatListProps) 
   const [chats, setChats] = useState<Chat[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showNewChat, setShowNewChat] = useState(false);
 
   useEffect(() => {
     api.messages.getChats().then((res) => {
@@ -116,7 +118,7 @@ export default function ChatList({ activeChatId, onChatSelect }: ChatListProps) 
               <div className="flex items-center justify-between mb-0.5">
                 <div className="flex items-center gap-1">
                   <span className="text-white text-sm font-semibold truncate">{chat.display_name}</span>
-                  <Icon name="Lock" size={11} className="text-violet-400 flex-shrink-0" />
+                  <Icon name="Lock" size={11} className="text-cyan-400 flex-shrink-0" />
                 </div>
                 <span className="text-gray-500 text-xs flex-shrink-0">{formatTime(chat.last_time)}</span>
               </div>
@@ -134,11 +136,32 @@ export default function ChatList({ activeChatId, onChatSelect }: ChatListProps) 
       </div>
 
       <div className="p-3">
-        <button className="new-chat-btn w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-semibold transition-all duration-300 hover:scale-[1.02]">
+        <button
+          onClick={() => setShowNewChat(true)}
+          className="new-chat-btn w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-semibold transition-all duration-300 hover:scale-[1.02]"
+        >
           <Icon name="Plus" size={16} className="text-white" />
           Новый чат
         </button>
       </div>
+
+      {showNewChat && (
+        <NewChatModal
+          onClose={() => setShowNewChat(false)}
+          onStartChat={(u) => {
+            const chatUser: Chat = {
+              user_id: u.id,
+              username: u.username,
+              display_name: u.display_name,
+              avatar_url: u.avatar_url,
+              is_online: u.is_online,
+              unread: 0,
+            };
+            onChatSelect(u.id, chatUser);
+            setShowNewChat(false);
+          }}
+        />
+      )}
     </div>
   );
 }
